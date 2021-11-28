@@ -33,7 +33,6 @@
 		"ms-kubernetes-tools.kind-vscode",
 		"ms-kubernetes-tools.vscode-kubernetes-tools",
 		"ms-azuretools.vscode-docker"
-
 	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
@@ -45,7 +44,4 @@
 	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
 
-	"mounts": [
-		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.kube/config,target=/home/vscode/.kube/config,type=bind,consistency=cached",
-	],
 }
