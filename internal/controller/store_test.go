@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -11,40 +10,13 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
+	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/util/workqueue"
 )
 
 func TestStore(t *testing.T) {
-	/*
-		//https://github.com/kubernetes-sigs/controller-runtime/blob/master/pkg/envtest/doc.go
-		testEnv := &envtest.Environment{}
-		config, err := testEnv.Start()
-		if err != nil {
-			t.Fatalf("Error starting k8s test environment: %v", err)
-		}
 
-		defer testEnv.Stop()
-
-		clientSet, err := kubernetes.NewForConfig(config)
-		if err != nil {
-			t.Fatalf("Error initialising k8s test client: %v", err)
-		}
-	*/
-
-	home := homedir.HomeDir()
-	kubeconfig := filepath.Join(home, ".kube", "config")
-
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		t.Fatalf("Error reading kubeconfig: %v", err)
-	}
-
-	clientSet, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		t.Fatalf("Error initialising Kubernetes client: %v", err)
-	}
+	clientSet := fake.NewSimpleClientset()
 
 	//should return no events for Pods in other Namespace
 
@@ -65,6 +37,9 @@ func TestStore(t *testing.T) {
 					},
 				},
 			},
+			Status: v1.PodStatus{
+				Phase: v1.PodRunning,
+			},
 		}
 
 		createPod(pod, ns, clientSet, t)
@@ -80,7 +55,7 @@ func TestStore(t *testing.T) {
 		store.Run(stopCh)
 
 		go processQueue(store.queue, &add, &upd, &del)
-		time.Sleep(3 * time.Second)
+		time.Sleep(time.Second)
 
 		if atomic.LoadUint64(&add) != 1 {
 			t.Errorf("expected 1 events of type Create but %v occurred", add)
